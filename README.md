@@ -21,6 +21,7 @@ Nyxie, sadece bir chatbot değil, aynı zamanda:
 ## 🚀 Özellikler
 
 ### 1. 💬 Gelişmiş Konuşma Yeteneği
+- Gemini AI ile hibrit ikili yapay zeka ile duruma göre daha güçlü modelle çalışma.
 - Gemini AI ile dinamik ve bağlamsal yanıtlar
 - Kullanıcı tercihlerini öğrenme ve hatırlama
 - Çoklu dil desteği (Türkçe, İngilizce ve diğer diller)
@@ -52,6 +53,10 @@ Nyxie, sadece bir chatbot değil, aynı zamanda:
 - Görsel içerik bağlamını anlama ve yorumlama
 
 ### 5. 🧠 Gelişmiş Semantik Bellek Sistemi
+- Konuşma geçmişini otomatik segmentlere ayırma
+- Bağlam duyarlı bellek optimizasyonu
+- trim_context.py ile akıllı bağlam kırpma algoritması
+- Otomatik token yönetimi ve sınırlama uyumluluğu
 - Semantik benzerlik tabanlı konuşma hatırlama
 - Kullanıcı sorguları ile ilgili geçmiş konuşmaları akıllıca bulma
 - SentenceTransformer ile gelişmiş vektör temsili
@@ -160,7 +165,7 @@ python bot.py
 ## 🤝 Destek
 
 ### Sorun Bildirim
-- GitHub Issues: [Proje Sayfası](https://github.com/stixyie/Nyxie-Protogen-Chatbot-Telegram-v8-main/issues)
+- GitHub Issues: [Proje Sayfası](https://github.com/stixyie/Nyxie-Protogen-Chatbot-Telegram-v9-main/issues)
 
 ### Katkıda Bulunma
 1. Projeyi forklayın

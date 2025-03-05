@@ -57,6 +57,76 @@ except Exception as e:
     logging.error(f"Failed to configure Gemini API: {str(e)}")
     raise
 
+# Define available models
+SIMPLE_MODEL = 'gemini-2.0-flash-lite'
+COMPLEX_MODEL = 'gemini-2.0-flash-thinking-exp-01-21'
+
+# Function to determine task complexity and select appropriate model
+async def determine_task_complexity(message_text):
+    """
+    Analyzes the message to determine its complexity and selects the appropriate model.
+    Returns a tuple of (model_name, complexity_level, reason)
+    """
+    try:
+        # Use the simple model to evaluate complexity
+        model = genai.GenerativeModel(SIMPLE_MODEL)
+        
+        # Create a prompt to evaluate complexity
+        evaluation_prompt = f"""
+        Görevin: Bu kullanıcı mesajını analiz ederek karmaşıklık seviyesini belirlemek.
+        
+        Kullanıcı Mesajı: "{message_text}"
+        
+        Değerlendirme Kriterleri:
+        1. Basit görevler (BASİT):
+           - Selamlaşma ve günlük konuşmalar
+           - Temel bilgi soruları
+           - Kısa ve net cevap gerektiren sorular
+           - Tek bir konu hakkında basit açıklamalar
+        
+        2. Karmaşık görevler (KARMAŞIK):
+           - Çok adımlı problem çözme gerektiren sorular
+           - Derin analiz ve düşünme gerektiren konular
+           - Birden fazla konu veya kavram arasında bağlantı kurma
+           - Uzun ve detaylı açıklama gerektiren konular
+           - Teknik veya uzmanlık bilgisi gerektiren sorular
+        
+        İki aşamalı karar ver:
+        1. Mesajı ve kriterleri düşün, karmaşıklık seviyesini belirle.
+        2. Kararını JSON formatında ver: {{"complexity": "BASİT" veya "KARMAŞIK", "reason": "kısa gerekçe"}}
+        
+        Yanıt SADECE JSON formatında olmalı, açıklama veya ek metin içermemeli.
+        """
+        
+        response = await model.generate_content_async(evaluation_prompt)
+        response_text = response.text.strip()
+        
+        # Extract JSON from response
+        import json
+        import re
+        
+        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        if json_match:
+            clean_json = json_match.group(0)
+            decision = json.loads(clean_json)
+            
+            complexity = decision.get("complexity", "BASİT")
+            reason = decision.get("reason", "Belirtilmedi")
+            
+            # Select model based on complexity
+            selected_model = COMPLEX_MODEL if complexity == "KARMAŞIK" else SIMPLE_MODEL
+            
+            logger.info(f"Task complexity: {complexity}, Model: {selected_model}, Reason: {reason}")
+            return (selected_model, complexity, reason)
+        
+        # Default to simple model if JSON parsing fails
+        logger.warning(f"Complexity evaluation JSON parsing failed. Response: {response_text}")
+        return (SIMPLE_MODEL, "BASİT", "JSON çıkarma hatası")
+        
+    except Exception as e:
+        logger.error(f"Task complexity evaluation error: {str(e)}")
+        return (SIMPLE_MODEL, "BASİT", f"Hata: {str(e)}")
+
 # Time-aware personality context (same as before)
 def get_time_aware_personality(current_time, user_lang, timezone_name):
     """Generate a dynamic, context-aware personality prompt"""
@@ -934,7 +1004,18 @@ User's message: {message_text}"""
                             else:
                                 logger.info(f"Web araması atlandı. Neden: {search_reason}")
 
-                            # Generate AI response
+                                        # Determine task complexity and select appropriate model
+                            selected_model_name, complexity_level, complexity_reason = await determine_task_complexity(message_text)
+                            
+                            # Log the model selection details
+                            logger.info(f"Task complexity assessment: {complexity_level}")
+                            logger.info(f"Selected model: {selected_model_name}")
+                            logger.info(f"Reason: {complexity_reason}")
+                            
+                            # Create model with selected complexity
+                            model = genai.GenerativeModel(selected_model_name)
+                            
+                            # Generate AI response with the selected model
                             response = await model.generate_content_async(ai_prompt)
 
                             # **Yeni Kontrol: Yanıt Engellenmiş mi? (Normal Mesaj)**
